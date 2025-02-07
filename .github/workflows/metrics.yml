@@ -1,0 +1,26 @@
+name: Meetup Metrics
+
+on:
+  schedule:
+    - cron: '0 8 * * 3'  # Runs at 8:00 AM every Wednesday
+  workflow_dispatch:      # Allows manual trigger
+
+jobs:
+  post-metrics:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        
+    - name: Install dependencies
+      run: npm install
+        
+    - name: Run metrics script
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      run: node index.js

@@ -1,0 +1,56 @@
+require('dotenv').config();
+const axios = require('axios');
+const cheerio = require('cheerio');
+const { WebClient } = require('@slack/web-api');
+
+class MeetupScraper {
+z`≈≈  constructor(isTestMode = true) {
+    this.slack = new WebClient(process.env.SLACK_BOT_TOKEN);
+    this.channel = isTestMode ? 'test' : 'general';
+    this.groupUrl = 'https://www.meetup.com/producttank-cardiff';
+  }
+
+  async scrapeMetrics() {
+    try {
+      const response = await axios.get(this.groupUrl);
+      const $ = cheerio.load(response.data);
+      
+      // Simple test version - we'll enhance the selectors later
+      const memberCount = $('span:contains("members")').first().text();
+      console.log('Found member count:', memberCount);
+
+      return {
+        memberCount
+      };
+    } catch (error) {
+      console.error('Scraping failed:', error);
+      throw error;
+    }
+  }
+
+  async postToSlack(message) {
+    try       await this.slack.chat.postMessage({
+        channel: this.channel,
+        text: message,
+        parse: 'mrkdwn'
+      });
+      console.log('Posted to Slack successfully');
+    } catch (error) {
+      console.error('Slack posting failed:', error);
+      throw error;
+    }
+  }
+
+  async run() {
+    try {
+      const metrics = await this.scrapeMetrics();
+      await this.postToSlack(`Test message - Member count: ${metrics.memberCount}`);
+    } catch (error) {
+      console.error('Script failed:', error);
+    }
+  }
+}
+
+// Run the script
+const scraper = new MeetupScraper(true);
+scraper.run();
